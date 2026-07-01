@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIPPLE</title>
+    <meta name="description"
+        content="RIPPLE - Personal expense tracking application to manage income, expenses, and savings.">
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- Header removed in favor of premium dashboard branding -->
+
+    <main class="app-main">
+        <!-- Loader -->
+        <div id="loader" class="loader-container hidden">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Dashboard View -->
+        <section id="view-dashboard" class="view active">
+            <div class="premium-branding">
+                <h1 class="brand-title">RIPPLE</h1>
+                <p class="brand-tagline">Track. Save. Grow.</p>
+                <p class="brand-quote">"Every transaction creates a ripple in your balance."</p>
+            </div>
+            <div class="summary-cards">
+                <div class="card income-card">
+                    <div class="card-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                    <div class="card-content">
+                        <h3>Income</h3>
+                        <p id="monthly-income">₹0</p>
+                    </div>
+                </div>
+                <div class="card expense-card">
+                    <div class="card-icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
+                    <div class="card-content">
+                        <h3>Expenses</h3>
+                        <p id="monthly-expense">₹0</p>
+                    </div>
+                </div>
+                <div class="card savings-card">
+                    <div class="card-icon"><i class="fa-solid fa-piggy-bank"></i></div>
+                    <div class="card-content">
+                        <h3>Savings</h3>
+                        <p id="monthly-savings">₹0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-charts">
+                <div class="card chart-card">
+                    <h3>Expenses by Category</h3>
+                    <div class="chart-container pie-container">
+                        <canvas id="categoryPieChart"></canvas>
+                    </div>
+                </div>
+                <div class="card chart-card">
+                    <h3>Income vs Expense</h3>
+                    <div class="chart-container bar-container">
+                        <canvas id="incomeExpenseBarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recent-transactions-preview">
+                <h3>Recent Transactions</h3>
+                <div id="recent-transactions-list" class="transactions-list">
+                    <!-- Preview items will be injected here -->
+                </div>
+                <button class="btn-text" onclick="app.navigateTo('history')">View All History <i
+                        class="fa-solid fa-chevron-right"></i></button>
+            </div>
+        </section>
+
+        <!-- Add Transaction View -->
+        <section id="view-add" class="view">
+            <h2 class="view-title">Add Transaction</h2>
+            <div class="card form-card">
+                <form id="add-transaction-form">
+                    <div class="form-group type-toggle">
+                        <input type="radio" id="type-expense" name="type" value="Expense" checked>
+                        <label for="type-expense" class="toggle-btn expense-toggle">Expense</label>
+
+                        <input type="radio" id="type-income" name="type" value="Income">
+                        <label for="type-income" class="toggle-btn income-toggle">Income</label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="amount">Amount</label>
+                        <div class="input-with-icon">
+                            <i class="fa-solid fa-indian-rupee-sign"></i>
+                            <input type="number" id="amount" name="amount" placeholder="0.00" required min="1"
+                                step="0.01">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <select id="category" name="category" required>
+                            <!-- Expense Categories (Default) -->
+                            <optgroup label="Expense Categories" id="expense-categories">
+                                <option value="Snacks">Snacks</option>
+                                <option value="Food">Food</option>
+                                <option value="Petrol">Petrol</option>
+                                <option value="Bike Service">Bike Service</option>
+                                <option value="Stationery">Stationery</option>
+                                <option value="Electricity">Electricity</option>
+                                <option value="BC Amt">BC Amt</option>
+                                <option value="Phone Bill">Phone Bill</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Others">Others</option>
+                            </optgroup>
+                            <!-- Income Categories (Hidden by default) -->
+                            <optgroup label="Income Categories" id="income-categories" style="display: none;">
+                                <option value="Salary">Salary</option>
+                                <option value="Pocket Money">Pocket Money</option>
+                                <option value="Freelance">Freelance</option>
+                                <option value="Others">Others</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="date">Date</label>
+                        <input type="date" id="date" name="date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Notes (Optional)</label>
+                        <input type="text" id="notes" name="notes" placeholder="What was this for?">
+                    </div>
+
+                    <button type="submit" class="btn-primary">Save Transaction</button>
+                </form>
+            </div>
+
+            <!-- Toast Notification -->
+            <div id="toast" class="toast hidden">Transaction Saved!</div>
+        </section>
+
+        <!-- Analytics View -->
+        <section id="view-analytics" class="view">
+            <div class="analytics-header">
+                <h2 class="view-title" style="margin-bottom: 0;">Analytics</h2>
+                <select id="analytics-time-filter" class="analytics-dropdown">
+                    <option value="weekly" selected>Weekly</option>
+                    <option value="monthly">Monthly</option>
+                </select>
+            </div>
+
+            <div class="analytics-tabs">
+                <button class="analytics-tab active" data-tab="expenses">Expenses Analytics</button>
+                <button class="analytics-tab" data-tab="earnings">Earnings Analytics</button>
+            </div>
+
+            <div class="card chart-card full-height" style="margin-top: 15px;">
+                <div id="analytics-empty-state" class="empty-state hidden">
+                    <p>No transaction data available yet. Add income or expenses to view analytics.</p>
+                </div>
+                <div id="analytics-chart-container" class="chart-container">
+                    <canvas id="analyticsLineChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- History View -->
+        <section id="view-history" class="view">
+            <h2 class="view-title">History</h2>
+            <div class="card history-actions">
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-history" placeholder="Search notes or category...">
+                </div>
+                <div class="filter-month">
+                    <input type="month" id="history-month-filter">
+                </div>
+            </div>
+
+            <div class="card table-card">
+                <div class="table-responsive">
+                    <table id="history-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Notes</th>
+                                <th class="text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            <!-- Transactions will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="no-history-msg" class="empty-state hidden">
+                    <i class="fa-solid fa-receipt"></i>
+                    <p>No transactions found.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings View -->
+        <section id="view-settings" class="view">
+            <h2 class="view-title">Settings</h2>
+
+            <!-- MAIN MENU -->
+            <div id="settings-main-menu">
+                <div class="settings-menu-card" onclick="openSettingsSub('profile')">
+                    <div class="settings-menu-icon">👤</div>
+                    <div class="settings-menu-info">
+                        <h3>Profile</h3>
+                        <p>Manage your personal information</p>
+                    </div>
+                    <div class="settings-menu-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+                </div>
+
+                <div class="settings-menu-card" onclick="openSettingsSub('notifications')">
+                    <div class="settings-menu-icon">🔔</div>
+                    <div class="settings-menu-info">
+                        <h3>Notification Alerts</h3>
+                        <p>Manage daily reminder settings</p>
+                    </div>
+                    <div class="settings-menu-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+                </div>
+
+                <!-- 3. APPEARANCE -->
+                <div class="card settings-card" style="margin-bottom: 15px;">
+                    <h3 class="settings-section-title">APPEARANCE</h3>
+                    <div class="setting-row">
+                        <span>Dark Mode</span>
+                        <label class="switch">
+                            <input type="checkbox" id="theme-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- ABOUT SECTION -->
+                <div class="about-section">
+                    <h2
+                        style="font-size: 1.5rem; font-weight: 700; color: var(--text-main); margin-bottom: 5px; letter-spacing: 2px;">
+                        RIPPLE</h2>
+                    <p>Version 1.0</p>
+                    <p>Built with ❤️ By Guru</p>
+                </div>
+            </div>
+
+            <!-- SUBVIEWS -->
+            <!-- 1. YOUR PROFILE -->
+            <div id="settings-sub-profile" class="settings-subview hidden">
+                <button class="btn-text settings-back-btn" onclick="closeSettingsSub()"><i
+                        class="fa-solid fa-arrow-left"></i> Back to Settings</button>
+                <div class="card settings-card" style="margin-top: 15px;">
+                    <h3 class="settings-section-title">YOUR PROFILE</h3>
+                    <div class="profile-details">
+                        <div class="form-group">
+                            <label for="profile-name">Full Name</label>
+                            <input type="text" id="profile-name" placeholder="John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label for="profile-phone">Phone Number</label>
+                            <input type="tel" id="profile-phone" placeholder="+1 234 567 8900">
+                        </div>
+                        <div class="form-group">
+                            <label for="profile-email">Email Address</label>
+                            <input type="email" id="profile-email" placeholder="john@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="profile-occupation">Occupation</label>
+                            <input type="text" id="profile-occupation" placeholder="Software Engineer">
+                        </div>
+                        <button class="btn-primary" id="save-profile-btn" style="padding: 10px; font-size: 0.9rem;">Save
+                            Changes</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. NOTIFICATION ALERTS -->
+            <div id="settings-sub-notifications" class="settings-subview hidden">
+                <button class="btn-text settings-back-btn" onclick="closeSettingsSub()"><i
+                        class="fa-solid fa-arrow-left"></i> Back to Settings</button>
+                <div class="card settings-card" style="margin-top: 15px;">
+                    <h3 class="settings-section-title">DAILY EXPENSE REMINDER</h3>
+                    <p class="settings-description">Get a reminder every day to update your income and expense details.
+                    </p>
+
+                    <div class="setting-row">
+                        <span>Enable Reminder</span>
+                        <label class="switch">
+                            <input type="checkbox" id="reminder-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 15px;" id="reminder-time-group">
+                        <label for="reminder-time">Reminder Time</label>
+                        <select id="reminder-time">
+                            <option value="21:00">9:00 PM</option>
+                            <option value="22:00">10:00 PM</option>
+                            <option value="23:00">11:00 PM</option>
+                            <option value="23:50">11:50 PM</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+
+        </section>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active" data-target="dashboard">
+            <i class="fa-solid fa-house"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-target="analytics">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Analytics</span>
+        </a>
+        <a href="#" class="nav-item" data-target="add">
+            <div class="add-btn-wrapper">
+                <div class="add-btn">
+                    <i class="fa-solid fa-plus"></i>
+                </div>
+            </div>
+            <span>Add</span>
+        </a>
+        <a href="#" class="nav-item" data-target="history">
+            <i class="fa-solid fa-clipboard-list"></i>
+            <span>History</span>
+        </a>
+        <a href="#" class="nav-item" data-target="settings">
+            <i class="fa-solid fa-gear"></i>
+            <span>Settings</span>
+        </a>
+    </nav>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom JS -->
+    <script src="app.js"></script>
+</body>
+
+</html>
