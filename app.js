@@ -69,8 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setupFilters();
     setupSettings();
 
-    // Fetch initial data
-    fetchTransactions();
+    // Fetch initial data quietly without loader
+    fetchTransactions(false);
 });
 
 // --- NAVIGATION ---
